@@ -309,7 +309,7 @@
             console.log('%c' + message, style);
         }
 
-                async function InitYSDK() {
+                        async function InitYSDK() {
             try {
                 if (IsLocalHost()) return;
 
@@ -359,8 +359,34 @@
                             },
                             getFlags: async () => ({}),
                             adv: {
-                                showFullscreenAdv: (opts) => opts?.callbacks?.onClose?.(false),
-                                showRewardedVideo: (opts) => opts?.callbacks?.onClose?.()
+                                showFullscreenAdv: (opts) => {
+                                    opts?.callbacks?.onOpen?.();
+                                    setTimeout(() => opts?.callbacks?.onClose?.(false), 50);
+                                },
+                                showRewardedVideo: (opts) => {
+                                    opts?.callbacks?.onOpen?.();
+                                    opts?.callbacks?.onRewarded?.();
+                                    setTimeout(() => opts?.callbacks?.onClose?.(), 50);
+                                },
+                                getBannerAdvStatus: async () => ({ stickyAdvIsShowing: false }),
+                                hideBannerAdv: () => {},
+                                showBannerAdv: () => {}
+                            },
+                            leaderboards: {
+                                getDescription: async (nameLB) => ({
+                                    appID: "000000",
+                                    default: true,
+                                    description: {
+                                        invert_sort_order: false,
+                                        score_format: { options: { decimal_offset: 0 } },
+                                        type: "numeric"
+                                    },
+                                    name: nameLB || "leaderboard",
+                                    title: { en: "Leaderboard", ru: "Таблица лидеров" }
+                                }),
+                                getEntries: async () => ({ entries: [], ranges: [], userRank: 0 }),
+                                getPlayerEntry: async () => ({ score: 0, rank: 0 }),
+                                setScore: async () => {}
                             },
                             getLeaderboards: async () => ({
                                 getLeaderboardEntries: async () => ({ entries: [] }),
@@ -369,7 +395,6 @@
                         })
                     };
                 }
-
                 ysdk = await YaGames.init();
                 ysdk.on('game_api_pause', PauseCallback);
                 ysdk.on('game_api_resume', ResumeCallback);
